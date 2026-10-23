@@ -758,11 +758,28 @@ def figure2(ds2, S2, stress, out):
     return vi
 
 
+LABEL = {
+    "log_funding": "Total funding (log)", "funding_rounds": "Funding rounds", "relationships": "Relationships",
+    "milestones": "Milestones", "avg_participants": "Avg. investors per round", "is_top500": "Top-500 flag",
+    "age_first_milestone_year": "Age at first milestone", "age_last_milestone_year": "Age at last milestone",
+    "age_first_funding_year": "Age at first funding", "age_last_funding_year": "Age at last funding",
+    "funding_span": "Funding span (yrs)", "founded_year": "Founding year",
+    "log_raised_w": "Raised in window (log)", "log_first_round": "First round size (log)",
+    "n_rounds_w": "Rounds in window", "n_investors_w": "Investors in window",
+    "avg_investors_per_round": "Avg. investors per round", "max_investor_experience": "Lead investor experience",
+    "max_investor_exits": "Lead investor prior exits", "age_at_first_funding": "Age at first funding",
+    "first_funding_year": "First funding year", "months_to_second": "Months to second round",
+    "is_USA": "U.S.-based", "sec_biotech": "Biotech sector", "has_venture": "Venture round",
+    "kb_score": "Knowledge score s_K"}
+
+
 def beeswarm(ds, S, title, path):
     K = add_knowledge(ds, ds.X, theory_signs(ds))[S.columns]
     top = np.abs(S).mean().sort_values(ascending=False).head(12).index[::-1]
     fig, ax = plt.subplots(figsize=(5.2, 3.6), dpi=300)
     cmap = LinearSegmentedColormap.from_list("bo", [ACCENT, "#d9d8d3", WARM])
+    cmap.set_bad("#bdbcb6")
+    rules = {r.id: f"{r.id} {r.name}" for r in ds.rules}
     rng = np.random.default_rng(SEED)
     for i, f in enumerate(top):
         v = K[f].to_numpy()
@@ -770,7 +787,7 @@ def beeswarm(ds, S, title, path):
         col = np.clip((v - lo) / (hi - lo + 1e-12), 0, 1)
         ax.scatter(S[f], i + rng.uniform(-0.28, 0.28, len(v)), c=col, cmap=cmap, s=2.5, lw=0, alpha=0.8)
     ax.axvline(0, color=EDGE, lw=0.6)
-    ax.set_yticks(range(len(top)), top, fontsize=6.5)
+    ax.set_yticks(range(len(top)), [LABEL.get(f, rules.get(f, f)) for f in top], fontsize=6.5)
     ax.set_xlabel("SHAP value (log-odds of success)")
     ax.set_title(title, fontsize=8, loc="left", color=INK)
     for s in ("top", "right"):
@@ -819,7 +836,9 @@ def main():
         if sp.name != PROPOSED:
             diffs = np.array([roc_auc_score(yte[i], preds[PROPOSED][i]) - roc_auc_score(yte[i], preds[sp.name][i])
                               for i in boots])
-            rec["p"] = float(2 * min((diffs <= 0).mean(), (diffs >= 0).mean()))
+            # two-sided paired bootstrap p; identical predictions give p = 1
+            rec["p"] = 1.0 if np.all(diffs == 0) else float(min(1.0, 2 * min((diffs <= 0).mean(),
+                                                                              (diffs >= 0).mean())))
             rec["ci"] = [float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))]
             rec["mark"] = mark(rec["p"])
         rec["hp"] = m.hp
