@@ -799,6 +799,41 @@ def beeswarm(ds, S, title, path):
     plt.close(fig)
 
 
+def graphical_abstract(out=OUT):
+    """Graphical abstract (Elsevier: >= 1328 x 531 px, 13 x 5 cm aspect).
+    Every number is read from results.json / table2, never typed in."""
+    r = json.load(open(f"{out}/results.json"))
+    st = pd.read_csv(f"{out}/table2_stress_test_draws.csv")
+    ts, n2 = r["time_split"], r["data"]["S2"]["n"]
+    kg, lgbm = ts[PROPOSED], ts["LightGBM"]
+    rec = 100 * st[(st.model == PROPOSED) & (st.k > 0)].recovery.mean()
+    fig, ax = plt.subplots(figsize=(10.4, 4.0), dpi=200)
+    ax.set_xlim(0, 104), ax.set_ylim(0, 40), ax.axis("off")
+
+    def box(x, w, title, lines, accent=False):
+        ax.add_patch(FancyBboxPatch((x, 6), w, 26, boxstyle="round,pad=0.4,rounding_size=1.5",
+                                    fc=(0.165, 0.47, 0.84, 0.10) if accent else "white",
+                                    ec=ACCENT if accent else EDGE, lw=1.6 if accent else 1.0))
+        ax.text(x + w / 2, 29, title, ha="center", va="top", fontsize=10, fontweight="bold", color=INK)
+        for i, ln in enumerate(lines):
+            ax.text(x + w / 2, 23.5 - 4.2 * i, ln, ha="center", va="top", fontsize=8.3, color=QUIET)
+
+    ax.text(52, 38.5, "KG-XAI: knowledge-guided, explainable startup success prediction",
+            ha="center", va="top", fontsize=12.5, fontweight="bold", color=INK)
+    box(1, 19, "Multi-source data", [f"{n2:,} startups", "4 linked Crunchbase", "tables, leakage-safe",
+                                      "2-year window"])
+    box(24, 19, "Knowledge base", ["9 rules from", "entrepreneurship", "theory, validated", "in every fold"])
+    box(47, 19, "KG-XAI learner", ["boosted trees +", "rule features +", "monotone", "constraints"], accent=True)
+    box(70, 33, "Results (2010-12 test)", [f"AUC {kg['auc']:.3f} vs {lgbm['auc']:.3f} black box",
+                                           f"theory violations {100 * kg['dvr']:.1f}% vs {100 * lgbm['dvr']:.1f}%",
+                                           f"wrong rules detected: {rec:.0f}%", "explanations by source and rule"])
+    for x0, x1 in ((20.6, 23.4), (43.6, 46.4), (66.6, 69.4)):
+        ax.add_patch(FancyArrowPatch((x0, 19), (x1, 19), arrowstyle="-|>", mutation_scale=12,
+                                     color=EDGE, lw=1.2))
+    fig.savefig(f"{out}/graphical_abstract.png", bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
 # =========================================================================== #
 # 8. Main                                                                      #
 # =========================================================================== #
@@ -808,7 +843,10 @@ def main():
     ap.add_argument("--draws", type=int, default=10)
     ap.add_argument("--jobs", type=int, default=-1)
     ap.add_argument("--quick", action="store_true", help="1 repeat, 2 draws: smoke test")
+    ap.add_argument("--redraw", action="store_true", help="only redraw the graphical abstract from results/")
     args = ap.parse_args()
+    if args.redraw:
+        return graphical_abstract()
     if args.quick:
         args.repeats, args.draws = 1, 2
     os.makedirs(OUT, exist_ok=True)
@@ -897,6 +935,7 @@ def main():
     }
     with open(f"{OUT}/results.json", "w") as fh:
         json.dump(js, fh, indent=2, default=float)
+    graphical_abstract()
     pd.set_option("display.width", 250)
     print(T1.to_string(index=False))
     print(T2.to_string(index=False))

@@ -58,6 +58,7 @@ KG-XAI is statistically indistinguishable from LightGBM in both studies and out 
 | `tableS1_rule_validation.*` | Supplementary Table S1: rule support, lift, retention, mean SHAP |
 | `tableS2_threshold_sensitivity.csv` | Supplementary Table S2: threshold sensitivity |
 | `fig1_framework.png`, `fig2_results.png` | Figures 1–2 |
+| `graphical_abstract.png` | Graphical abstract (`python kgxai.py --redraw` rebuilds it from results) |
 | `figS1_shap_s2.png`, `figS2_shap_s1.png` | Supplementary SHAP plots |
 | `results.json` | All metrics, chosen hyperparameters, refinement retention |
 
