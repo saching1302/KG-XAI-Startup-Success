@@ -1,76 +1,53 @@
-# KG-XAI: Knowledge-Guided Explainable AI for Startup Success Prediction
+# KB-XAI: Explainable Knowledge-Based Startup Success Prediction
 
-Code, data and results for the short communication
-**"An Explainable AI Knowledge-Based Model for Predicting Startup Success Using Multi-Source Entrepreneurial Data"**
-(submitted to *Knowledge-Based Systems*).
+Code for the short communication **"An Explainable AI Knowledge-Based Model for Predicting Startup Success Using Multi-Source Entrepreneurial Data"** (submitted to *Knowledge-Based Systems*).
 
-KG-XAI combines a knowledge base of nine entrepreneurship rules with gradient-boosted trees:
-
-1. **Knowledge base.** Rules from signalling, staged financing, resource-based, syndication, endorsement, legitimacy, cluster and liability-of-newness theory.
-2. **In-fold refinement.** A rule, and the raw features its theory signs, is kept only if the training fold agrees with its direction. Contradicted knowledge is released and flagged.
-3. **Knowledge-guided learner.** LightGBM on raw features plus rule activations, with monotone constraints that follow the validated directions.
-4. **Explanations and audit.** Exact TreeSHAP attributions by source view and by fired rule, plus a directional violation rate (DVR) that measures theory-violating what-if responses.
+KB-XAI encodes entrepreneurial-finance theory as a small knowledge base of directional rules, injects those rules into a gradient-boosted tree model as monotone constraints, explains every prediction with exact TreeSHAP, and audits whether the explanations agree with theory.
 
 ![Framework](results/fig1_framework.png)
 
-## Reproduce
+## Reproduce everything
 
 ```bash
 pip install -r requirements.txt
-python kgxai.py             # full run: about 30 min on 2 CPU cores, faster with more
-python kgxai.py --quick     # smoke test: 1 repeat, 2 stress draws
+python kbxai.py            # downloads data to ./data, writes ./results (~1 min)
 ```
 
-## Studies
+One script (`kbxai.py`) produces every number, table and figure in the paper. Results are deterministic (`SEED = 42`).
 
-| | Study 1 (benchmark) | Study 2 (leakage-safe) |
-|---|---|---|
-| Source | Kaggle *Startup Success Prediction* | Open Crunchbase snapshot (Dec 2015), 4 linked tables |
-| Startups | 922 (U.S.) | 7,455 (worldwide), first funded 2005–2012 |
-| Success | acquired (64.6%) | acquired or IPO (49.2%) |
-| Features | 32 in 6 views (lifetime snapshot) | 36 in 6 views, only information dated before first funding + 2 years |
-| Extra test | – | out-of-time: train 2005–09, test 2010–12 |
-
-## Experiments
-
-- **E1 – Accuracy and consistency.** 10 models (5 baselines including an EBM-style boosted additive model, a knowledge-only scorer, and 3 ablations); 5 × 5 repeated CV with nested 3-fold tuning; corrected resampled t-test; an out-of-time test with a paired bootstrap.
-- **E2 – Wrong-knowledge stress test.** k = 1–3 confirmed rules are given the wrong direction, with up to 10 random draws each. Refinement is compared with naive knowledge injection.
-- **E3 – Robustness.** Rule thresholds scaled ×0.5–×1.5, and Study 1 re-run without its lifetime-accumulation features.
-
-## Key results
-
-| Model | S1 AUC | S2 AUC (CV) | S2 AUC (2010–12 test) | S2 DVR (%) |
-|---|---|---|---|---|
-| LightGBM (best data-only) | 0.834 | 0.815 | 0.840 | 15.6 |
-| Boosted GAM (EBM-style) | 0.831 | 0.806 | 0.825 | 17.4 |
-| Knowledge base only | 0.778 | 0.765 | 0.796 | 0.8 |
-| **KG-XAI (proposed)** | **0.827** | **0.814** | **0.837** | **0.1** |
-
-KG-XAI is statistically indistinguishable from LightGBM in both studies and out of time (p = 0.15), while nearly eliminating theory-violating responses. In the stress test, refinement released **100%** of the wrongly-directed knowledge and **0%** of the correct knowledge, and its accuracy stayed flat while naive injection degraded. Full numbers are in `results/`.
-
-## Outputs (`results/`)
-
-| File | Content |
+| Output | Paper |
 |---|---|
-| `table1_performance.*` | Table 1: accuracy, calibration, P@10%, DVR, stability (both studies, out-of-time) |
-| `table1_full_metrics.csv` | Every metric with SDs and p-values |
-| `table2_knowledge_robustness.*` | Table 2: stress-test summary; `table2_stress_test_draws.csv` has every draw |
-| `tableS1_rule_validation.*` | Supplementary Table S1: rule support, lift, retention, mean SHAP |
-| `tableS2_threshold_sensitivity.csv` | Supplementary Table S2: threshold sensitivity |
-| `fig1_framework.png`, `fig2_results.png` | Figures 1–2 |
-| `graphical_abstract.png` | Graphical abstract (`python kgxai.py --redraw` rebuilds it from results) |
-| `figS1_shap_s2.png`, `figS2_shap_s1.png` | Supplementary SHAP plots |
-| `results.json` | All metrics, chosen hyperparameters, refinement retention |
+| `results/table1_performance.csv` | Table 1: predictive performance and monotonicity-violation rate |
+| `results/table2_knowledge_audit.csv` | Table 2: knowledge base, rule importance, audit and ablation |
+| `results/fig1_framework.png` | Figure 1: KB-XAI framework |
+| `results/fig2_explanations.png` | Figure 2: global SHAP explanation and rule-consistency |
+| `results/metrics.json` | Sample sizes, paired bootstrap CIs, alignment scores |
+| `results/case_explanation.txt` | Example rule-grounded local explanation |
 
 ## Data
 
-- `data/startup_data.csv` – the Kaggle *Startup Success Prediction* dataset by Manish KC (https://www.kaggle.com/datasets/manishkc06/startup-success-prediction). It is included unchanged (MD5 `817a0130e2d3f763af4632afed46654a`). The Kaggle page lists no explicit license, all rights remain with the publisher, and the file will be removed on request.
-- `data/crunchbase_s2_features.csv` – derived Study 2 features. It was built by `kgxai.py` from the open Crunchbase export (© Crunchbase, CC BY-NC 4.0, mirrored at https://github.com/notpeter/crunchbase-data). Delete the file to rebuild it from the raw tables, which are downloaded automatically. It is for non-commercial use only.
+Crunchbase open data export (4 Dec 2015) as CSV, mirrored at [notpeter/crunchbase-data](https://github.com/notpeter/crunchbase-data): `companies`, `rounds`, `investments`, `acquisitions`. The data is licensed CC BY-NC 4.0 by Crunchbase and is downloaded on first run, not redistributed here.
 
-## Files
+## Design
 
-`kgxai.py` is the whole pipeline: data → knowledge base → models → experiments → tables → figures. `data/` holds the inputs, and `results/` holds the generated outputs.
+- **Sample.** Startups first funded 2000–2012 with a resolved outcome. Success = acquired or IPO; failure = closed (n = 9,045).
+- **No look-ahead.** Features use only the first 24 months after first funding. Startups that exit inside that window are removed. Investor track records count only deals and exits before each deal date, ranked within the deal year to remove the drift caused by the export's left-censored history. Undisclosed round amounts are kept as missing.
+- **Out-of-time test.** Train on 2000–2008 cohorts (n = 5,209), test on 2009–2012 cohorts (n = 3,836).
+- **Knowledge base (R1–R7).** Investor track record, investor experience, syndication, staged financing, financial resources, VC certification, cluster location. Each rule fixes the sign of a feature's effect and becomes a LightGBM monotone constraint.
+- **Knowledge audit.** *MVR*: share of test startups whose predicted success falls when a rule feature improves. *KAS*: direction-signed Spearman correlation between a feature and its SHAP values.
+
+## Main results (2009–2012 test cohorts)
+
+| Model | Test AUC [95% CI] | MVR (%) |
+|---|---|---|
+| Logistic regression | 0.797 [0.783, 0.810] | 39.19 |
+| Random forest | 0.815 [0.802, 0.829] | 22.83 |
+| LightGBM, single-source | 0.804 [0.790, 0.818] | 30.10 |
+| LightGBM, multi-source | 0.812 [0.799, 0.825] | 25.43 |
+| **KB-XAI (proposed)** | 0.801 [0.787, 0.814] | **0.00** |
+
+KB-XAI removes all theory-violating behaviour and raises mean knowledge alignment from 0.41 to 0.83, at a cost of 0.011 AUC (paired 95% CI 0.007–0.016) relative to the unconstrained multi-source model.
 
 ## License
 
-The code is MIT-licensed. The data keep their original licenses (see above).
+Code: MIT. Data: CC BY-NC 4.0 (Crunchbase).

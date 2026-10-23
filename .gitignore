@@ -1,4 +1,5 @@
-data/crunchbase_raw
+data/
 __pycache__/
 *.pyc
+.venv/
 .DS_Store
