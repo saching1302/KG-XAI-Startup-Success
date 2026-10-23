@@ -16,7 +16,7 @@ KG-XAI joins three parts into one decision-support model:
 
 ```bash
 pip install -r requirements.txt
-python kgxai.py               # about 2 minutes on a laptop; downloads the data on first run
+python kgxai.py               # about 2 minutes on a laptop; uses data/startup_data.csv
 ```
 
 All outputs are written to `results/`:
@@ -41,11 +41,13 @@ KG-XAI matches the black-box accuracy: the AUC difference is not significant und
 
 ## Data
 
-The data are the public Crunchbase-derived *Startup Success Prediction* dataset (923 U.S. startups; target = acquired vs. closed), as published on Kaggle by Manish KC. On first run, `kgxai.py` downloads a mirror into `data/`, or you can pass your own copy with `--data path.csv`. Leakage columns (`closed_at`, `labels`, identifiers) are never used.
+`data/startup_data.csv` contains the public Crunchbase-derived *Startup Success Prediction* dataset (923 U.S. startups, 49 columns; target `status` = acquired / closed). It was published on Kaggle by Manish KC: https://www.kaggle.com/datasets/manishkc06/startup-success-prediction
+
+The file is included unchanged (MD5 `817a0130e2d3f763af4632afed46654a`) so the results can be reproduced. All rights to the data remain with its original publisher, and the Kaggle page lists no explicit license; please cite the Kaggle source when you use it. The file will be removed on request from the rights holder. Leakage columns (`closed_at`, `labels`, identifiers) are never used by the model.
 
 ## Files
 
-`kgxai.py` is the whole pipeline (data → knowledge base → model → evaluation → tables → figures). `requirements.txt` lists the pinned dependencies. `results/` holds the generated outputs.
+`kgxai.py` is the whole pipeline (data → knowledge base → model → evaluation → tables → figures). `data/` holds the input dataset, `requirements.txt` lists the dependencies, and `results/` holds the generated outputs.
 
 ## License
 
