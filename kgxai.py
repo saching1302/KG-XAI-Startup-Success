@@ -367,8 +367,8 @@ def figure1(n, out):
                                            "legitimacy, clusters"])
     box(25, 6, 22, 17, "Knowledge refinement", ["rules kept only if the", "training fold agrees;",
                                                 "s_K(x) = Σ d_j r_j(x)"])
-    box(53.5, 6, 21, 38, "KG-XAI learner", ["boosted trees on x ⊕ r(x) ⊕ s_K(x)", "",
-                                                   "monotone constraints", "follow the refined", "direction d_j"],
+    box(53.5, 6, 21, 38, "KG-XAI learner", ["gradient-boosted trees", "on x ⊕ r(x) ⊕ s_K(x)", "",
+                                            "monotone constraints", "follow the refined", "direction d_j"],
         accent=True)
     box(80.5, 27, 19, 17, "Prediction", ["P(acquisition | x)", "decision support for", "investors, accelerators"])
     box(80.5, 6, 19, 17, "Explanation", ["exact TreeSHAP", "by view and by rule,", "consistency audit"])
